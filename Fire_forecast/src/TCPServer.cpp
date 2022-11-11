@@ -10,9 +10,10 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
+#include "Sensor.h"
 
 
-TCPServer::TCPServer(int port, int maxclients, int duration, sa_family_t f, in_addr_t a) : Sensor_node(duration)
+TCPServer::TCPServer(Sensor* x, int port, int maxclients, int duration, sa_family_t f, in_addr_t a) : Sensor_node(x, duration)
 {
 	// Create socket for the server
 	server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -63,7 +64,9 @@ void TCPServer::accept_connection()
 		// Add the new accepted client_socket to list of clients
 		else if (new_socket >=0 && active)
 		{
+			clients_mtx.lock();
 			clients.insert(new_socket);
+			clients_mtx.unlock();
 			
 		}
 	}
@@ -81,7 +84,9 @@ void TCPServer::handle_send(double reading)
 		// On failure to send, clear the client from the list as client closes the connection
 		if (send_status < 0)
 		{
+			clients_mtx.lock();
 			it = clients.erase(it);											// Update it with iterator next to the deleted item
+			clients_mtx.unlock();
 
 		}
 		else
@@ -90,6 +95,17 @@ void TCPServer::handle_send(double reading)
 		}
 		
 	}
+}
+
+// Function to get the current number of connected clients using mutex locks
+int TCPServer::get_clients_number()
+{
+	int size;
+	clients_mtx.lock();
+	size = clients.size();
+	clients_mtx.unlock();
+	return size;
+
 }
 
 // Function to instantiate two threads to handle server operations
