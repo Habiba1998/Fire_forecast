@@ -1,6 +1,6 @@
+#include "Client.h"
 #include "TCPClient.h"
 #include <netinet/in.h>
-
 #define port 8080
 
 
@@ -11,12 +11,13 @@ int main()
 	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
 
-	TCPClient c;
-	c.connect_server(address);
+	Client* c = new TCPClient (address);
+	
 
 
-	while (1)
+	while (c->get_connected())					
 	{
 	}
+	delete c;
 	return 0;
 }
