@@ -1,5 +1,3 @@
-//#include "stdafx.h"
-//#include "..\include\TCPClient.h"
 #include "TCPClient.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -11,14 +9,20 @@
 
 TCPClient::TCPClient()
 {
-	connected = false;
+	set_connected(false);
 	
+}
+TCPClient::TCPClient(struct sockaddr_in address)							
+{
+	set_connected(false);
+	connect_server(address);
+
 }
 
 // Function to connect client to server of given address
 bool TCPClient::connect_server(struct sockaddr_in address, bool accumulate)
 {
-	if (connected)														// If the client is connected, return false
+	if (get_connected())														// If the client is connected, return false
 		return false;
 
 	client_socket = socket(AF_INET, SOCK_STREAM, 0);					// Create client socket
@@ -39,18 +43,14 @@ bool TCPClient::connect_server(struct sockaddr_in address, bool accumulate)
 		return false;
 	}
 
-	connected = true;
+	set_connected(true);
 
 	if (!accumulate)													// If the data won't be accumulated then change it to zero 
 	{																	// using mutex locks
-		acc_mtx.lock();
-		accumulation = 0;
-		acc_mtx.unlock();
+		set_accumulation(0);
+		set_readings_number(0);
+		set_average(0);
 
-		av_mtx.lock();
-		readings_number = 0;
-		average = 0;
-		av_mtx.unlock();
 	}
 	
 	// Create two threads to handle reading data from the server and printing it
@@ -69,7 +69,7 @@ void TCPClient::read_server()
 	int bytes;
 
 	// Thread executes while the client is connected
-	while (connected)
+	while (get_connected())
 	{
 		// Wait for data to be received till timeout
 		bytes = recv(client_socket, &data, sizeof(data), 0);
@@ -79,7 +79,7 @@ void TCPClient::read_server()
 		}
 		else
 		{
-			connected = false;												// If timeout occurs, close the connection
+			set_connected(false);												// If timeout occurs, close the connection
 			close(client_socket);
 		
 		}
@@ -89,10 +89,10 @@ void TCPClient::read_server()
 
 TCPClient::~TCPClient()
 {
-	if (connected)
+	if (get_connected())
 
 	{
-		connected = false;													
+		set_connected(false);													
 		close(client_socket);
 	}
 }

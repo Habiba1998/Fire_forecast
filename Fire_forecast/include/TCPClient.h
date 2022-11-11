@@ -12,6 +12,7 @@ private:
 		 
 public:
 	TCPClient();
+	TCPClient(struct sockaddr_in address);
 	bool connect_server(struct sockaddr_in address, bool accumulate = false);		// accumulate option to allow accumulating results
 																					// To previous connection results
 	void read_server();
