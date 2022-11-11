@@ -14,6 +14,7 @@ add_executable(client_task TCPClient_task.cpp)
 
 target_sources(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Sensor_node.cpp)
 target_sources(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/TCPServer.cpp)
+target_sources(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Sensor.cpp)
 target_include_directories(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_sources(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Client.cpp)
@@ -23,12 +24,12 @@ target_include_directories(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_sources(server_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Sensor_node.cpp)
 target_sources(server_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/TCPServer.cpp)
+target_sources(server_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Sensor.cpp)
 target_include_directories(server_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_sources(client_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Client.cpp)
 target_sources(client_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/TCPClient.cpp)
 target_include_directories(client_task PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 
 
 
