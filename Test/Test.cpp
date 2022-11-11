@@ -3,6 +3,7 @@
 #include "Client.h"
 #include "Sensor_node.h"
 #include "TCPServer.h"
+#include "Sensor.h"
 #include <thread>
 #include <chrono>
 #include <netinet/in.h>
@@ -10,9 +11,10 @@
 
 TEST(OneClient1, ConnectionDoneSuccessfully)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -26,14 +28,16 @@ TEST(OneClient1, ConnectionDoneSuccessfully)
 
 	delete s;
 	delete c;
+	delete x;
 	system("pause");
 }
 
 TEST(OneClient2, DataReceivedSuccessfully)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -43,47 +47,54 @@ TEST(OneClient2, DataReceivedSuccessfully)
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
-	EXPECT_GE(100.0, c->get_accumulation());
-	EXPECT_GE(100.0, c->get_average());
+	EXPECT_LE(100.0, c->get_accumulation());
+	EXPECT_LE(100.0, c->get_average());
 	
 	delete s;
 	delete c;
+	delete x;
 	system("pause");
 
 }
 
 TEST(OneClient3, AccumulationAndAverageUpdatedSuccessfully)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 
 	TCPClient* c = new TCPClient();
 	bool flag = c->connect_server(address);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
-	s->set_reading(200);
+	x->set_reading(200);
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-	EXPECT_GE(300.0, c->get_accumulation());
-	EXPECT_GE(150.0, c->get_average());
+	
+	double a = c->get_accumulation();
+	double b = c->get_average();
+	EXPECT_LE(300.0, a);
+	EXPECT_LE(150.0, b);				
+	
 
 	delete s;
 	delete c;
+	delete x;
 	system("pause");
 
 }
 
 TEST(OneClient4, ServerShutDownAndClientDisconnectAfterTimeOut)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -100,15 +111,17 @@ TEST(OneClient4, ServerShutDownAndClientDisconnectAfterTimeOut)
 	EXPECT_FALSE(c->get_connected());
 
 	delete c;
+	delete x;
 	system("pause");
 
 }
 
 TEST(OneClient5, ClientConnectToOtherServer)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -120,11 +133,11 @@ TEST(OneClient5, ClientConnectToOtherServer)
 
 	delete s;
 
-	TCPServer s1(8000, 5, 1000);
-	s1.set_reading(200);
+	TCPServer s1(x, 8000, 5, 1000);
+	x->set_reading(200);
 	s1.run();
 
-	std::this_thread::sleep_for(std::chrono::seconds(10));				//assume timeout = 5
+	std::this_thread::sleep_for(std::chrono::seconds(20));				//assume timeout = 5
 
 	
 	address.sin_port = htons(8000);
@@ -135,15 +148,17 @@ TEST(OneClient5, ClientConnectToOtherServer)
 	EXPECT_TRUE(c->get_connected());
 
 	delete c;
+	delete x;
 	system("pause");
 
 }
 
 TEST(OneClient6, ServerRemoveTheClientFromTheListWhenItClosesTheSocket)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -160,15 +175,17 @@ TEST(OneClient6, ServerRemoveTheClientFromTheListWhenItClosesTheSocket)
 	EXPECT_EQ(0, s->get_clients_number());
 
 	delete s;
+	delete x;
 	system("pause");
 
 }
 
 TEST(OneClient7, ClientConnectionFailOnConnectingToServerUsingWrongAddress)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -181,6 +198,7 @@ TEST(OneClient7, ClientConnectionFailOnConnectingToServerUsingWrongAddress)
 
 	delete s;
 	delete c;
+	delete x;
 	system("pause");
 
 }
@@ -188,9 +206,10 @@ TEST(OneClient7, ClientConnectionFailOnConnectingToServerUsingWrongAddress)
 
 TEST(MoreThanOneClient1, TwoClientsConnectedSuccessfullyToServer)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -209,14 +228,16 @@ TEST(MoreThanOneClient1, TwoClientsConnectedSuccessfullyToServer)
 	delete s;
 	delete c1;
 	delete c2;
+	delete x;
 	system("pause");
 }
 
 TEST(MoreThanOneClient2, OneClientDisconnectButServerAndOtherClientsNotAffected)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -237,14 +258,16 @@ TEST(MoreThanOneClient2, OneClientDisconnectButServerAndOtherClientsNotAffected)
 	
 	delete s;
 	delete c2;
+	delete x;
 	system("pause");
 }
 
 TEST(MoreThanOneClient3, AccumulationAndAverageUpdatedSuccessfully)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -256,25 +279,27 @@ TEST(MoreThanOneClient3, AccumulationAndAverageUpdatedSuccessfully)
 
 	TCPClient* c2 = new TCPClient();
 	bool flag2 = c2->connect_server(address);
-	s->set_reading(200);
+	x->set_reading(200);
 
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	EXPECT_EQ(200.0, c2->get_accumulation());
-	EXPECT_EQ(200.0, c2->get_average());
+	EXPECT_LE(200.0, c2->get_accumulation());
+	EXPECT_LE(200.0, c2->get_average());
 
 	delete s;
 	delete c1;
 	delete c2;
+	delete x;
 	system("pause");
 
 }
 
 TEST(MoreThanOneClient4, ServerShutDownAndClientsDisconnectAfterTimeOut)
 {
-	TCPServer* s = new TCPServer(8080, 5, 1000);
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
 	struct sockaddr_in address = s->get_address();
-	s->set_reading(100);
+	x->set_reading(100);
 	s->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -295,6 +320,7 @@ TEST(MoreThanOneClient4, ServerShutDownAndClientsDisconnectAfterTimeOut)
 
 	delete c1;
 	delete c2;
+	delete x;
 	system("pause");
 
 }
