@@ -3,23 +3,16 @@
 #include <thread>
 
 
-// Initialize the static member
-std::mutex Sensor_node::reading_mtx;
+//##########commit
 
 
 
-
-Sensor_node::Sensor_node(int d)
+Sensor_node::Sensor_node(Sensor* s, int d)
 {
+	sensor = s;
 	duration = d;
 }
 
-void Sensor_node::set_reading(double value)
-{
-	reading_mtx.lock();
-	reading = value;
-	reading_mtx.unlock();
-}
 
 void Sensor_node::send_reading()
 {
@@ -28,9 +21,7 @@ void Sensor_node::send_reading()
 	while (active)
 	{
 		ms = std::chrono::steady_clock::now() + std::chrono::milliseconds(duration);
-		reading_mtx.lock();
-		current_reading = reading;
-		reading_mtx.unlock();
+		current_reading = sensor->get_reading();
 		handle_send(current_reading);
 		std::this_thread::sleep_until(ms);						// To ensure periodic update of the clients
 	}
