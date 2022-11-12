@@ -32,6 +32,7 @@ TEST(OneClient1, ConnectionDoneSuccessfully)
 	system("pause");
 }
 
+
 TEST(OneClient2, DataReceivedSuccessfully)
 {
 	Sensor* x = new Sensor();
@@ -74,7 +75,7 @@ TEST(OneClient3, AccumulationAndAverageUpdatedSuccessfully)
 
 	x->set_reading(200);
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 	
 	double a = c->get_accumulation();
 	double b = c->get_average();
@@ -153,7 +154,41 @@ TEST(OneClient5, ClientConnectToOtherServer)
 
 }
 
-TEST(OneClient6, ServerRemoveTheClientFromTheListWhenItClosesTheSocket)
+TEST(OneClient6, ClientCannotConnectToOtherServerIfItIsConnected)
+{
+	Sensor* x = new Sensor();
+	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
+	TCPServer* s2 = new TCPServer(x, 8000, 5, 1000);
+	struct sockaddr_in address = s->get_address();
+	x->set_reading(100);
+	s->run();
+	s2->run();
+
+	std::this_thread::sleep_for(std::chrono::seconds(2));
+
+	TCPClient* c = new TCPClient();
+	bool flag = c->connect_server(address);
+
+	std::this_thread::sleep_for(std::chrono::seconds(4));
+
+
+
+	address.sin_port = htons(8000);
+	flag = c->connect_server(address);
+
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+
+	EXPECT_FALSE(flag);
+
+	delete s;
+	delete s2;
+	delete c;
+	delete x;
+	system("pause");
+
+}
+
+TEST(OneClient7, ServerRemoveTheClientFromTheListWhenItClosesTheSocket)
 {
 	Sensor* x = new Sensor();
 	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
@@ -180,7 +215,7 @@ TEST(OneClient6, ServerRemoveTheClientFromTheListWhenItClosesTheSocket)
 
 }
 
-TEST(OneClient7, ClientConnectionFailOnConnectingToServerUsingWrongAddress)
+TEST(OneClient8, ClientConnectionFailOnConnectingToServerUsingWrongAddress)
 {
 	Sensor* x = new Sensor();
 	TCPServer* s = new TCPServer(x, 8080, 5, 1000);
@@ -281,7 +316,7 @@ TEST(MoreThanOneClient3, AccumulationAndAverageUpdatedSuccessfully)
 	bool flag2 = c2->connect_server(address);
 	x->set_reading(200);
 
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 
 	EXPECT_LE(200.0, c2->get_accumulation());
 	EXPECT_LE(200.0, c2->get_average());
