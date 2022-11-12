@@ -49,13 +49,14 @@ TCPServer::TCPServer(Sensor* x, int port, unsigned int maxclients, int duration,
 // Function that handles accepting new connection, it is handled by a thread
 void TCPServer::accept_connection()
 {
-	int addrlen = sizeof(address);
+	struct sockaddr_storage serverStorage;
+	int addrlen = sizeof(serverStorage);
 	
 	// The thread continues to execuye while the server is active
 	while (active) {
 		
 		int* new_socket = new int;
-		*new_socket = accept(server_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen); 
+		*new_socket = accept(server_socket, (struct sockaddr*)&serverStorage, (socklen_t*)&addrlen); 
 		if (*new_socket < 0 && active)
 		{
 			perror("Server Socket Accept Failed");
