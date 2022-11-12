@@ -1,9 +1,3 @@
-cmake_minimum_required (VERSION 2.8.11)
-project (Fire_forecast)
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS -pthread)
-
 #server and client libraries for testing
 add_library (server)
 add_library (client) 
