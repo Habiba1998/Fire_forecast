@@ -134,9 +134,9 @@ TEST(OneClient5, ClientConnectToOtherServer)
 
 	delete s;
 
-	TCPServer s1(x, 8000, 5, 1000);
+	TCPServer* s1 = new TCPServer(x, 8000, 5, 1000);
 	x->set_reading(200);
-	s1.run();
+	s1->run();
 
 	std::this_thread::sleep_for(std::chrono::seconds(20));				//assume timeout = 5
 
@@ -147,7 +147,7 @@ TEST(OneClient5, ClientConnectToOtherServer)
 	std::this_thread::sleep_for(std::chrono::seconds(5));
 
 	EXPECT_TRUE(c->get_connected());
-
+	delete s1;
 	delete c;
 	delete x;
 	system("pause");
@@ -319,7 +319,7 @@ TEST(MoreThanOneClient3, AccumulationAndAverageUpdatedSuccessfully)
 	std::this_thread::sleep_for(std::chrono::seconds(3));
 
 	EXPECT_LE(200.0, c2->get_accumulation());
-	EXPECT_LE(200.0, c2->get_average());
+	EXPECT_LE(150.0, c2->get_average());
 
 	delete s;
 	delete c1;
