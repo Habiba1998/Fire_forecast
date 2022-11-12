@@ -135,8 +135,8 @@ void Client::handleprint()
 // Function to print the average and accumulation
 void Client::print(double av, double acc)
 {
-	cout << "Average over time equals " << av << endl;
-	cout << "Accumulation over time equals " << acc << endl;
+	cout << "Average over time equals " << av << " degree Celsius."<< endl;
+	cout << "Accumulation over time equals " << acc << " degree Celsius." << endl;
 	cout << endl;
 }
 
