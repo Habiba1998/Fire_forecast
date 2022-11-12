@@ -13,7 +13,7 @@
 #include "Sensor.h"
 
 
-TCPServer::TCPServer(Sensor* x, int port, int maxclients, int duration, sa_family_t f, in_addr_t a) : Sensor_node(x, duration)
+TCPServer::TCPServer(Sensor* x, int port, unsigned int maxclients, int duration, sa_family_t f, in_addr_t a) : Sensor_node(x, duration)
 {
 	// Create socket for the server
 	server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,74 +49,54 @@ TCPServer::TCPServer(Sensor* x, int port, int maxclients, int duration, sa_famil
 // Function that handles accepting new connection, it is handled by a thread
 void TCPServer::accept_connection()
 {
-	int new_socket;
 	int addrlen = sizeof(address);
 	
 	// The thread continues to execuye while the server is active
 	while (active) {
 		
-		new_socket = accept(server_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen); 
-		if (new_socket < 0 && active)
+		int* new_socket = new int;
+		*new_socket = accept(server_socket, (struct sockaddr*)&address, (socklen_t*)&addrlen); 
+		if (*new_socket < 0 && active)
 		{
 			perror("Server Socket Accept Failed");
 			exit(EXIT_FAILURE);
 		}
 		// Add the new accepted client_socket to list of clients
-		else if (new_socket >=0 && active)
+		else if (*new_socket >=0 && active)
 		{
-			clients_mtx.lock();
-			clients.insert(new_socket);
-			clients_mtx.unlock();
+			std::thread send_thr(&TCPServer::send_reading, this, (void*) new_socket);
+			send_thr.detach();
+			add_client();					// increment the number of clients
 			
 		}
 	}
 }
 
 // Function that sends the reading to the connected clients
-void TCPServer::handle_send(double reading)
+bool TCPServer::handle_send(double reading, void* new_socket)
 {
-	
 	int send_status;
-	for (auto it = clients.begin(); it != clients.end();)
+	send_status = send(*((int*) new_socket), &reading, sizeof(reading), MSG_NOSIGNAL);
+	// On failure to send, return false
+	if (send_status < 0)
 	{
-		send_status =send(*it, &reading, sizeof(reading), MSG_NOSIGNAL);	// MSG_NOSIGNALto prevent terminating the process on failure
-
-		// On failure to send, clear the client from the list as client closes the connection
-		if (send_status < 0)
-		{
-			clients_mtx.lock();
-			it = clients.erase(it);											// Update it with iterator next to the deleted item
-			clients_mtx.unlock();
-
-		}
-		else
-		{
-			++it;
-		}
-		
+		remove_client();										// Decrement the number of clients
+		delete (int*)new_socket;
+		return false;
 	}
+	return true;
+	
 }
 
-// Function to get the current number of connected clients using mutex locks
-int TCPServer::get_clients_number()
-{
-	int size;
-	clients_mtx.lock();
-	size = clients.size();
-	clients_mtx.unlock();
-	return size;
 
-}
 
 // Function to instantiate two threads to handle server operations
 // Thread coonection_thr: to accept new client connections, Thread send_thr: to send the sensor reading to the connected clients periodically
 void TCPServer::run()
 {
 	std::thread connection_thr(&TCPServer::accept_connection, this);
-	std::thread send_thr(&TCPServer::send_reading, this);
 	connection_thr.detach();
-	
-	send_thr.detach();
+
 }
 
 TCPServer::~TCPServer()
