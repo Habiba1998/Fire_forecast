@@ -81,7 +81,9 @@ bool TCPServer::handle_send(double reading, void* new_socket)
 	if (send_status < 0)
 	{
 		remove_client();										// Decrement the number of clients
+		close(*(int*)new_socket);
 		delete (int*)new_socket;
+		
 		return false;
 	}
 	return true;
